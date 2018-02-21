@@ -26,14 +26,15 @@ public class SHA256Sum {
         try {
             if (args.length == 0) {
                 ByteArrayOutputStream baos = new ByteArrayOutputStream();
-                int byteRead;
+                byte[] buffer = new byte[32 * 1024];
+                int bytesRead;
 
-                while ((byteRead = System.in.read()) != -1) {
-                    baos.write(byteRead);
+                while ((bytesRead = System.in.read(buffer)) > 0) {
+                    baos.write(buffer, 0, bytesRead);
                 }
+
                 printHash("-", baos.toByteArray());
             }
-
 
             for (int i = 0; i < args.length; ++i) {
                 printHash(args[i], Files.readAllBytes(Paths.get(args[i])));
