@@ -10,7 +10,7 @@ import java.io.IOException;
  * @author Georgiy Korneev (kgeorgiy@kgeorgiy.info)
  */
 public class CalcMD5Test {
-    public static void main(final String[] args) throws IOException {
+    public static void main(final String... args) throws IOException {
         new HashChecker("CalcMD5").test(
                 Triple.of("input.txt", "input.txt", "A8546347050ADC932FBEC189DC9FD50D"),
                 Triple.of("__test_hello.txt", "hello", "5D41402ABC4B2A76B9719D911017C592"),
