@@ -23,31 +23,18 @@ public class SHA256Sum {
     }
 
     public static void main(String[] args) {
-        if (args.length == 0) {
-            /*Scanner sc = new Scanner(System.in);
-            sc.useDelimiter(Pattern.compile("\\Z", Pattern.DOTALL));*/
-            try {
-                ByteArrayOutputStream baos = new ByteArrayOutputStream();
-                byte[] buffer = new byte[32 * 1024];
-
-                int bytesRead;
-
-                while ((bytesRead = System.in.read(buffer)) > 0) {
-                    baos.write(buffer, 0, bytesRead);
-                }
-
-                byte[] bytes = baos.toByteArray();
-
-                //System.out.println(getSHAHex(bytes) + " *-");
-
-                printHash("-", bytes);
-                //printHash("-", sc.next().getBytes(StandardCharsets.UTF_8));
-            } catch (IOException err) {
-                System.out.println(err.getMessage());
-            }
-        }
-
         try {
+            if (args.length == 0) {
+                ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                int byteRead;
+
+                while ((byteRead = System.in.read()) != -1) {
+                    baos.write(byteRead);
+                }
+                printHash("-", baos.toByteArray());
+            }
+
+
             for (int i = 0; i < args.length; ++i) {
                 printHash(args[i], Files.readAllBytes(Paths.get(args[i])));
             }
