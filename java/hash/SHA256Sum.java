@@ -6,9 +6,7 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Scanner;
 import javax.xml.bind.DatatypeConverter;
-import java.util.regex.Pattern;
 import java.nio.charset.StandardCharsets;
-import java.io.ByteArrayOutputStream;
 
 public class SHA256Sum {
 
@@ -25,15 +23,13 @@ public class SHA256Sum {
     public static void main(String[] args) {
         try {
             if (args.length == 0) {
-                ByteArrayOutputStream baos = new ByteArrayOutputStream();
-                byte[] buffer = new byte[32 * 1024];
-                int bytesRead;
-
-                while ((bytesRead = System.in.read(buffer)) > 0) {
-                    baos.write(buffer, 0, bytesRead);
+                Scanner sc = new Scanner(System.in, "UTF-8");
+                sc.useDelimiter("\\Z");
+                String s = "";
+                if (sc.hasNext()) {
+                    s = sc.next();
                 }
-
-                printHash("-", baos.toByteArray());
+                printHash("-", s.getBytes(StandardCharsets.UTF_8));
             }
 
             for (int i = 0; i < args.length; ++i) {

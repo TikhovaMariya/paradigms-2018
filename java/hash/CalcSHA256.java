@@ -16,18 +16,13 @@ public class CalcSHA256 {
         try {
             MessageDigest md = MessageDigest.getInstance("SHA-256");
             if (args.length == 0) {
-                Scanner sc = new Scanner(System.in);
-                sc.useDelimiter(Pattern.compile("\\Z", Pattern.DOTALL));
-                System.out.println(DatatypeConverter.printHexBinary(md.digest(sc.next().
-                        getBytes(StandardCharsets.UTF_8))));
-
-                /*Scanner sc = new Scanner(System.in);
-                StringBuilder sb = new StringBuilder();
-                while(sc.hasNextLine()) {
-                    sb.append(sc.nextLine());
+                Scanner sc = new Scanner(System.in, "UTF-8");
+                sc.useDelimiter("\\Z");
+                String s = "";
+                if (sc.hasNext()) {
+                    s = sc.next();
                 }
-                System.out.println(DatatypeConverter.printHexBinary(md.digest(sb.toString().
-                        getBytes(StandardCharsets.UTF_8))));*/
+                System.out.println(DatatypeConverter.printHexBinary(md.digest(s.getBytes(StandardCharsets.UTF_8))));
             } else {
                 try (BufferedReader in = new BufferedReader(new InputStreamReader(new FileInputStream(args[0]), "UTF-8"))) {
                     while (in.ready()) {
