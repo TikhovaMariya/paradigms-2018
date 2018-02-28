@@ -1,3 +1,1 @@
-__test_empty.txt
-__test_empty.txt
-__test_empty.txt
+input.txt
