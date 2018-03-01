@@ -4,7 +4,7 @@ import java.lang.Integer;
 import java.lang.String;
 import java.lang.IndexOutOfBoundsException;
 
-public class BinarySearch {
+public class BinarySearc {
     //Pre: forall i < j: a[i] >= a[j]
     private static int binSearch(int x, int[] a) {
         int l = -1, r = a.length;
