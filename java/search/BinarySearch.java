@@ -20,6 +20,7 @@ public class BinarySearch {
                 r = m;
             }
         }
+
         return r;
     }
     //Post: x = x'

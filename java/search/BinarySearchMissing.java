@@ -5,11 +5,11 @@ import java.lang.String;
 import java.lang.IndexOutOfBoundsException;
 
 public class BinarySearchMissing {
-    //Pre: forall i a[i] >= a[i + 1]
+    // Pre: forall i a[i] >= a[i + 1]
     private static int binSearch(int x, int[] a) {
         int l = -1, r = a.length;
         int m;
-        //Inv: l >= l' && r <= r' && l < r
+        // Inv: l >= l' && r <= r' && l < r
         //     r - l >= 1
         //     (r - l) <= (r' - l') / 2
         //     forall 0 <= i <= l: a[i] > x
@@ -22,7 +22,10 @@ public class BinarySearchMissing {
                 r = m;
             }
         }
-        //Pre && Inv && r - l == 1
+        // x = x'
+        // a.length = a'.length
+        // a[i] = a'[i] for i = 0...a.length - 1
+        // Inv && r - l == 1
         // (a[a.size - 1] > x || a.size == 0) && l = a.size() - 1 && r == a.size ||
         // r < a.size && a[r] <= x && (r == 0 || a[r - 1] > x)
         if (r < a.length && a[r] == x) {
@@ -39,9 +42,8 @@ public class BinarySearchMissing {
     //                           (a[r*] < x && a[r* - 1] > x)
 
 
-
     //Pre: forall i < j: a[i] >= a[j]
-    //Inv: l >= l' && r <= r' && l < r
+    //     l >= l' && r <= r' && l < r && l
     //     r - l >= 1
     //     (r - l) <= (r' - l') / 2
     //     forall 0 <= i <= l: a[i] > x
@@ -59,6 +61,7 @@ public class BinarySearchMissing {
         }
         return recursiveBinSearch(x, a, l, m);
     }
+
     //Post: x = x'
     //      a.length = a'.length
     //      a[i] = a'[i] for i = 0...a.length - 1
@@ -66,7 +69,6 @@ public class BinarySearchMissing {
     //      R: -r* - 1 such that (r* < a.length && a[r*] == x) ||
     //                           (a[0] > x && r* == a.length) ||
     //                           (a[r*] < x && a[r* - 1] > x)
-
     public static void main(String[] args) {
         try {
             int x = Integer.valueOf(args[0]);
