@@ -9,7 +9,7 @@ public class ArrayQueue extends AbstractQueue{
     public void enqueueImpl(Object element) {
         ensureCapacity(size + 1);
         elements[tail] = element;
-        tail = (tail + 1) % elements.length;
+        tail = increaseIndex(tail);
     }
 
     public Object elementImpl() {
@@ -21,7 +21,7 @@ public class ArrayQueue extends AbstractQueue{
         size--;
         Object result = elements[head];
         elements[head] = null;
-        head = (head + 1) % elements.length;
+        head = increaseIndex(head);
         return result;
     }
 
@@ -49,5 +49,9 @@ public class ArrayQueue extends AbstractQueue{
         System.arraycopy(elements, head, newElements, 0, length);
         System.arraycopy(elements, 0, newElements, length, size - length);
         return newElements;
+    }
+
+    private int increaseIndex(int x) {
+        return (x + 1) % elements.length;
     }
 }
