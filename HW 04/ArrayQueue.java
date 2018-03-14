@@ -6,16 +6,13 @@ public class ArrayQueue extends AbstractQueue{
     private int ARRAY_SIZE = 10;
     private Object[] elements = new Object[ARRAY_SIZE];
 
-
     public void enqueueImpl(Object element) {
         ensureCapacity(size + 1);
-        size++;
         elements[tail] = element;
         tail = (tail + 1) % elements.length;
     }
 
     public Object elementImpl() {
-        assert size != 0;
         return elements[head];
     }
 
@@ -46,7 +43,6 @@ public class ArrayQueue extends AbstractQueue{
         tail = size;
     }
 
-    @Override
     public Object[] toArray(int array_size) {
         Object[] newElements = new Object[array_size];
         int length = Math.min(size, elements.length - head);

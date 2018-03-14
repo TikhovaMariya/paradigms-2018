@@ -12,11 +12,9 @@ public class LinkedQueue extends AbstractQueue{
         } else {
             previous.next = tail;
         }
-        size++;
     }
 
     public Object elementImpl() {
-        assert size != 0;
         return head.value;
     }
 
@@ -44,7 +42,6 @@ public class LinkedQueue extends AbstractQueue{
         }
     }
 
-    @Override
     public Object[] toArray(int array_size) {
         Object[] newElements = new Object[array_size];
         Node current = head;

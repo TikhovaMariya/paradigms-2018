@@ -4,11 +4,12 @@ public abstract class AbstractQueue implements Queue {
     protected int size;
 
     public void enqueue(Object element) {
-        assert size > 0;
-        return peekImpl();
+        assert element != null;
+        enqueueImpl(element);
+        size++;
     }
 
-    protected abstract Object enqueueImpl();
+    protected abstract void enqueueImpl(Object element);
 
     public Object dequeue() {
         assert size != 0;
@@ -17,18 +18,21 @@ public abstract class AbstractQueue implements Queue {
 
     protected abstract Object dequeueImpl();
 
+    public Object element() {
+        assert size != 0;
+        return elementImpl();
+    }
 
-    @Override
+    protected abstract Object elementImpl();
+
     public int size() {
         return size;
     }
 
-    @Override
     public boolean isEmpty() {
         return size == 0;
     }
 
-    @Override
     public Object[] toArray() {
         assert size != 0;
         return toArray(size);
