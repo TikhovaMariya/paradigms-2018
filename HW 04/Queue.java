@@ -1,7 +1,7 @@
 package queue;
 
 // Inv: (a.size >= 0) && (a[i] != null for i = 1..a.size)
-public interface Queue{
+public interface Queue {
     // Pre: element != null
     public void enqueue(Object element);
     // Post: (a.size == a'.size + 1) && (a[i] == a[i - 1] for i = 1..a.size) && a[1] == element
