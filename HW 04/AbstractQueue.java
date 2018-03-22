@@ -13,6 +13,7 @@ public abstract class AbstractQueue implements Queue {
 
     public Object dequeue() {
         assert size != 0;
+        size--;
         return dequeueImpl();
     }
 
@@ -34,9 +35,11 @@ public abstract class AbstractQueue implements Queue {
     }
 
     public Object[] toArray() {
-        assert size != 0;
-        return toArray(size);
+        Object[] result = new Object[size];
+        for (int i = 0; i < size; i++) {
+            result[i] = dequeue();
+            enqueue(result[i]);
+        }
+        return result;
     }
-
-    public abstract Object[] toArray(int array_size);
 }
