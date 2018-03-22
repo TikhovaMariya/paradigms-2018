@@ -1,13 +1,13 @@
 package queue;
 
-public class LinkedQueue extends AbstractQueue{
+public class LinkedQueue extends AbstractQueue {
     private Node head;
     private Node tail;
 
     public void enqueueImpl(Object element) {
         Node previous = tail;
         tail = new Node(element, null);
-        if(size == 0) {
+        if (size == 0) {
             head = tail;
         } else {
             previous.next = tail;
@@ -19,8 +19,6 @@ public class LinkedQueue extends AbstractQueue{
     }
 
     public Object dequeueImpl() {
-        assert size != 0;
-        size--;
         Object result = head.value;
         head = head.next;
         return result;
@@ -42,13 +40,13 @@ public class LinkedQueue extends AbstractQueue{
         }
     }
 
-    public Object[] toArray(int array_size) {
-        Object[] newElements = new Object[array_size];
+    /*public Object[] toArray() {
+        Object[] newElements = new Object[size];
         Node current = head;
-        for(int i = 0; i < array_size; i++) {
+        for(int i = 0; i < size; i++) {
             newElements[i] = current.value;
             current = current.next;
         }
         return newElements;
-    }
+    }*/
 }
