@@ -1,6 +1,6 @@
 package queue;
 
-public class ArrayQueue extends AbstractQueue{
+public class ArrayQueue extends AbstractQueue {
     private int head = 0;
     private int tail = 0;
     private int ARRAY_SIZE = 10;
@@ -17,8 +17,6 @@ public class ArrayQueue extends AbstractQueue{
     }
 
     public Object dequeueImpl() {
-        assert size != 0;
-        size--;
         Object result = elements[head];
         elements[head] = null;
         head = increaseIndex(head);
@@ -34,11 +32,7 @@ public class ArrayQueue extends AbstractQueue{
         if (n <= elements.length) {
             return;
         }
-        Object[] newElements = new Object[n * 2];
-        int length = Math.min(size, elements.length - head);
-        System.arraycopy(elements, head, newElements, 0, length);
-        System.arraycopy(elements, 0, newElements, length, size - length);
-        elements = newElements;
+        elements = toArray(n * 2);
         head = 0;
         tail = size;
     }
