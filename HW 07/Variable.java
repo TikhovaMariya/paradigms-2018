@@ -1,6 +1,6 @@
 package expression;
 
-import expression.exceptions.*;
+import expression.exceptions.EvaluatingException;
 
 public class Variable implements CommonExpression {
     private String name;
@@ -14,7 +14,7 @@ public class Variable implements CommonExpression {
     }
 
     public int evaluate(int x) throws EvaluatingException {
-        if(name != "x") {
+        if (name != "x") {
             System.out.println("duh " + name);
         }
         return x;

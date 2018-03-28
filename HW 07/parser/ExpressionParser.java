@@ -8,16 +8,34 @@ public class ExpressionParser implements Parser {
     private int index = 0;
     private int value;
     private int brace_balance = 0;
-    private Token lastToken;
 
     private String variable;
     private Token curToken;
+    private Token previousToken;
 
     private enum Token {
         CONST, VAR, NEG, ADD, SUB, DIV, MUL,
         OPEN_BRACE, CLOSE_BRACE, AND, XOR, OR, END
     }
 
+
+    private boolean isOperandExpectedAfter(Token token) {
+        return token == Token.CONST || token == Token.VAR || token == Token.CLOSE_BRACE;
+    }
+
+    private boolean isArgumentExpectedAfter(Token token) {
+        return (token == Token.END && index != expression.length()) || token == Token.NEG ||
+                token == Token.OPEN_BRACE || token == Token.ADD || token == Token.SUB ||
+                token == Token.DIV || token == Token.MUL;
+    }
+
+    private void setOperandToken(Token token) throws NoArgumentException {
+        if (isOperandExpectedAfter(curToken)) {
+            curToken = token;
+        } else {
+            throw new NoArgumentException();
+        }
+    }
 
     private void skipWhitespaces() {
         while (index < expression.length() && Character.isWhitespace(expression.charAt(index))) {
@@ -42,9 +60,7 @@ public class ExpressionParser implements Parser {
         variable = expression.substring(start, index);
         switch (variable) {
             case "x":
-                break;
             case "y":
-                break;
             case "z":
                 break;
             default:
@@ -59,47 +75,33 @@ public class ExpressionParser implements Parser {
             char ch = expression.charAt(index);
             switch (ch) {
                 case '-':
-                    if (curToken == Token.CONST || curToken == Token.VAR || curToken == Token.CLOSE_BRACE) {
+                    if (isOperandExpectedAfter(curToken)) {
                         curToken = Token.SUB;
                     } else {
                         curToken = Token.NEG;
                     }
                     break;
                 case '+':
-                    if (curToken == Token.CONST || curToken == Token.VAR || curToken == Token.CLOSE_BRACE) {
-                        curToken = Token.ADD;
-                    } else {
-                        throw new IllegalOperandException();
-                    }
+                    setOperandToken(Token.ADD);
                     break;
                 case '/':
-                    if (curToken == Token.CONST || curToken == Token.VAR || curToken == Token.CLOSE_BRACE) {
-                        curToken = Token.DIV;
-                    } else {
-                        throw new IllegalOperandException();
-                    }
+                    setOperandToken(Token.DIV);
                     break;
                 case '*':
-                    if (curToken == Token.CONST || curToken == Token.VAR || curToken == Token.CLOSE_BRACE) {
-                        curToken = Token.MUL;
-                    } else {
-                        throw new IllegalOperandException();
-                    }
+                    setOperandToken(Token.MUL);
                     break;
                 case '(':
                     brace_balance++;
-                    if ((curToken == Token.END && index != expression.length()) || curToken == Token.NEG ||
-                            curToken == Token.OPEN_BRACE || curToken == Token.ADD || curToken == Token.SUB ||
-                            curToken == Token.DIV || curToken == Token.MUL) {
+                    if (isArgumentExpectedAfter(curToken)) {
                         curToken = Token.OPEN_BRACE;
                     } else {
-                        throw new IllegalOperandException();
+                        throw new NoOperandException();
                     }
                     break;
                 case ')':
                     brace_balance--;
                     if (brace_balance < 0) {
-                        throw new IllegalOperandException();
+                        throw new NoOpeningParenthesisException();
                     }
                     curToken = Token.CLOSE_BRACE;
                     break;
@@ -114,15 +116,13 @@ public class ExpressionParser implements Parser {
                     break;
                 default:
                     if (Character.isDigit(ch)) { //next token is a number
-                        if (curToken == Token.CONST || curToken == Token.VAR ||
-                                curToken == Token.CLOSE_BRACE) {
+                        if (isOperandExpectedAfter(curToken)) {
                             throw new IllegalOperandException();
                         }
                         parseValue();
                         curToken = Token.CONST;
                     } else if (Character.isLetter(ch)) { //next token is a variable
-                        if (curToken == Token.CONST || curToken == Token.VAR ||
-                                curToken == Token.CLOSE_BRACE) {
+                        if (isOperandExpectedAfter(curToken)) {
                             throw new IllegalOperandException();
                         }
                         parseVariable();
@@ -133,8 +133,8 @@ public class ExpressionParser implements Parser {
             }
             index++;
         } else {
-            if(brace_balance != 0) {
-                throw new IllegalOperandException();
+            if (brace_balance > 0) {
+                throw new NoClosingParenthesisException();
             }
             curToken = Token.END;
         }
@@ -142,29 +142,31 @@ public class ExpressionParser implements Parser {
 
     // prim() - обрабатывает первичные выражения
     private CommonExpression prim() throws ParsingException {
-        Token thelastToken = curToken;
+        previousToken = curToken;
         nextToken();
-        lastToken = curToken;
         CommonExpression result;
         switch (curToken) {
             case CONST:
-                if(value < 0 && !(value == Integer.MIN_VALUE && (thelastToken == Token.NEG || thelastToken == Token.SUB))) {
-                    throw new IllegalOperandException();
+                if (value < 0 &&
+                        !(value == Integer.MIN_VALUE && (previousToken == Token.NEG || previousToken == Token.SUB))) {
+                    throw new ConstantOverflowException();
                 }
                 result = new Const(value);
+                previousToken = curToken;
                 nextToken();
                 break;
             case VAR:
                 result = new Variable(variable);
+                previousToken = curToken;
                 nextToken();
                 break;
             case NEG:
                 CommonExpression prim = prim();
-                if (lastToken == Token.CONST && value < 0) {
-                    if(value == Integer.MIN_VALUE) {
+                if (previousToken == Token.CONST && value < 0) {
+                    if (value == Integer.MIN_VALUE) {
                         result = prim;
                     } else {
-                        throw new IllegalOperandException();
+                        throw new ConstantOverflowException();
                     }
                 } else {
                     result = new CheckedNegate(prim);
@@ -172,14 +174,13 @@ public class ExpressionParser implements Parser {
                 break;
             case OPEN_BRACE:
                 result = or();
+                previousToken = curToken;
                 nextToken();
                 break;
             default:
                 result = new Const(0);
-                if ((thelastToken == Token.END && index != expression.length()) || thelastToken == Token.NEG ||
-                        thelastToken == Token.OPEN_BRACE || thelastToken == Token.ADD || thelastToken == Token.SUB ||
-                        thelastToken == Token.DIV || thelastToken == Token.MUL) {
-                    throw new IllegalOperandException();
+                if (isArgumentExpectedAfter(previousToken)) {
+                    throw new NoArgumentException();
                 }
         }
         return result;
