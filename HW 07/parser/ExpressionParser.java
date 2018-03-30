@@ -14,7 +14,7 @@ public class ExpressionParser implements Parser {
     private Token previousToken;
 
     private enum Token {
-        CONST, VAR, NEG, ADD, SUB, DIV, MUL,
+        CONST, VAR, NEG, ADD, SUB, DIV, MUL, LOG10, POW10,
         OPEN_BRACE, CLOSE_BRACE, AND, XOR, OR, END
     }
 
@@ -24,16 +24,17 @@ public class ExpressionParser implements Parser {
     }
 
     private boolean isArgumentExpectedAfter(Token token) {
+
         return (token == Token.END && index != expression.length()) || token == Token.NEG ||
-                token == Token.OPEN_BRACE || token == Token.ADD || token == Token.SUB ||
-                token == Token.DIV || token == Token.MUL;
+                token == Token.OPEN_BRACE || token == Token.ADD || token == Token.SUB || token == Token.POW10 ||
+                token == Token.LOG10 || token == Token.DIV || token == Token.MUL;
     }
 
     private void setOperandToken(Token token) throws NoArgumentException {
-        if (isOperandExpectedAfter(curToken)) {
-            curToken = token;
-        } else {
+        if (isArgumentExpectedAfter(curToken)) {
             throw new NoArgumentException();
+        } else {
+            curToken = token;
         }
     }
 
@@ -52,16 +53,30 @@ public class ExpressionParser implements Parser {
         index--;
     }
 
-    private void parseVariable() throws ParsingException {
+    private void parseText() throws ParsingException {
         int start = index;
         while (index < expression.length() && Character.isLetter(expression.charAt(index))) {
             index++;
         }
-        variable = expression.substring(start, index);
-        switch (variable) {
+        String s = expression.substring(start, index);
+        switch (s) {
+            case "log":
+                if (expression.charAt(index) == '1' && expression.charAt(index + 1) == '0') {
+                    index += 2;
+                    curToken = Token.LOG10;
+                }
+                break;
+            case "pow":
+                if (expression.charAt(index) == '1' && expression.charAt(index + 1) == '0') {
+                    index += 2;
+                    curToken = Token.POW10;
+                }
+                break;
             case "x":
             case "y":
             case "z":
+                variable = s;
+                curToken = Token.VAR;
                 break;
             default:
                 throw new UnknownVariableException();
@@ -92,10 +107,10 @@ public class ExpressionParser implements Parser {
                     break;
                 case '(':
                     brace_balance++;
-                    if (isArgumentExpectedAfter(curToken)) {
-                        curToken = Token.OPEN_BRACE;
-                    } else {
+                    if (isOperandExpectedAfter(curToken)) {
                         throw new NoOperandException();
+                    } else {
+                        curToken = Token.OPEN_BRACE;
                     }
                     break;
                 case ')':
@@ -115,18 +130,14 @@ public class ExpressionParser implements Parser {
                     curToken = Token.OR;
                     break;
                 default:
+                    if (isOperandExpectedAfter(curToken)) {
+                        throw new NoOperandException();
+                    }
                     if (Character.isDigit(ch)) { //next token is a number
-                        if (isOperandExpectedAfter(curToken)) {
-                            throw new IllegalOperandException();
-                        }
                         parseValue();
                         curToken = Token.CONST;
                     } else if (Character.isLetter(ch)) { //next token is a variable
-                        if (isOperandExpectedAfter(curToken)) {
-                            throw new IllegalOperandException();
-                        }
-                        parseVariable();
-                        curToken = Token.VAR;
+                        parseText();
                     } else {
                         throw new UnknownSymbolException();
                     }
@@ -161,21 +172,26 @@ public class ExpressionParser implements Parser {
                 nextToken();
                 break;
             case NEG:
-                CommonExpression prim = prim();
+                CommonExpression logPow10 = logPow10();
                 if (previousToken == Token.CONST && value < 0) {
                     if (value == Integer.MIN_VALUE) {
-                        result = prim;
+                        result = logPow10;
                     } else {
                         throw new ConstantOverflowException();
                     }
                 } else {
-                    result = new CheckedNegate(prim);
+                    result = new CheckedNegate(logPow10);
                 }
                 break;
             case OPEN_BRACE:
                 result = or();
                 previousToken = curToken;
                 nextToken();
+                break;
+            case LOG10:
+            case POW10:
+                previousToken = curToken;
+                result = new Const(0);
                 break;
             default:
                 result = new Const(0);
@@ -186,22 +202,41 @@ public class ExpressionParser implements Parser {
         return result;
     }
 
-    // term() - умножение и деление
-    private CommonExpression term() throws ParsingException {
+
+    // logPow10() - логарифм и возведение в степень по основанию 10
+    private CommonExpression logPow10() throws ParsingException {
         CommonExpression result = prim();
         while (true) {
             switch (curToken) {
-                case MUL:
-                    result = new CheckedMultiply(result, prim());
+                case POW10:
+                    result = new CheckedPow(logPow10());
                     break;
-                case DIV:
-                    result = new CheckedDivide(result, prim());
+                case LOG10:
+                    result = new CheckedLog(logPow10());
                     break;
                 default:
                     return result;
             }
         }
     }
+
+    // term() - умножение и деление
+    private CommonExpression term() throws ParsingException {
+        CommonExpression result = logPow10();
+        while (true) {
+            switch (curToken) {
+                case MUL:
+                    result = new CheckedMultiply(result, logPow10());
+                    break;
+                case DIV:
+                    result = new CheckedDivide(result, logPow10());
+                    break;
+                default:
+                    return result;
+            }
+        }
+    }
+
 
     // expr() - сложение и вычитание
     private CommonExpression expr() throws ParsingException {
