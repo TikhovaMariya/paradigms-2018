@@ -10,10 +10,10 @@ public class CheckedDivide extends AbstractBinaryOperation {
 
     protected int perform(int x, int y) throws OverflowException, DivisionByZeroException {
         if (y == 0) { // (x / 0)
-            throw new DivisionByZeroException();
+            throw new DivisionByZeroException(Integer.toString(x) + " / 0");
         }
-        if (x == Integer.MIN_VALUE && y == -1) { //2^32 is out of Integer range
-            throw new OverflowException();
+        if (x == Integer.MIN_VALUE && y == -1) { //2^31 is out of Integer range
+            throw new OverflowException("overflow while dividing");
         }
         return x / y;
     }

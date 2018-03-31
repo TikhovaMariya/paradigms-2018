@@ -9,7 +9,7 @@ public class CheckedLog extends AbstractUnaryOperation {
 
     protected int perform(int x) throws IllegalLogArgumentException {
         if (x <= 0) {
-            throw new IllegalLogArgumentException();
+            throw new IllegalLogArgumentException(x);
         }
         int result = 0;
         while(x > 0) {

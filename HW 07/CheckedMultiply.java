@@ -12,7 +12,7 @@ public class CheckedMultiply extends AbstractBinaryOperation {
                 (y < 0 && Integer.MAX_VALUE / y > x) || // x * y > MAX_VALUE && x < 0 && y < 0
                 (x > 0 && Integer.MIN_VALUE / x > y) || // x * y < MIN_VALUE && x > 0 && y < 0
                 (y > 0 && Integer.MIN_VALUE / y > x)) { // x * y < MIN_VALUE && x < 0 && y > 0
-            throw new OverflowException();
+            throw new OverflowException("overflow while multiplying");
         }
         return x * y;
     }

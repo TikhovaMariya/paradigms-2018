@@ -24,7 +24,6 @@ public class ExpressionParser implements Parser {
     }
 
     private boolean isArgumentExpectedAfter(Token token) {
-
         return (token == Token.END && index != expression.length()) || token == Token.NEG ||
                 token == Token.OPEN_BRACE || token == Token.ADD || token == Token.SUB || token == Token.POW10 ||
                 token == Token.LOG10 || token == Token.DIV || token == Token.MUL;
@@ -32,7 +31,7 @@ public class ExpressionParser implements Parser {
 
     private void setOperandToken(Token token) throws NoArgumentException {
         if (isArgumentExpectedAfter(curToken)) {
-            throw new NoArgumentException();
+            throw new NoArgumentException(index);
         } else {
             curToken = token;
         }
@@ -64,12 +63,16 @@ public class ExpressionParser implements Parser {
                 if (expression.charAt(index) == '1' && expression.charAt(index + 1) == '0') {
                     index += 2;
                     curToken = Token.LOG10;
+                } else {
+                    throw new UnknownVariableException(index - 3);
                 }
                 break;
             case "pow":
                 if (expression.charAt(index) == '1' && expression.charAt(index + 1) == '0') {
                     index += 2;
                     curToken = Token.POW10;
+                } else {
+                    throw new UnknownVariableException(index - 3);
                 }
                 break;
             case "x":
@@ -79,7 +82,7 @@ public class ExpressionParser implements Parser {
                 curToken = Token.VAR;
                 break;
             default:
-                throw new UnknownVariableException();
+                throw new UnknownVariableException(index);
         }
         index--;
     }
@@ -108,7 +111,7 @@ public class ExpressionParser implements Parser {
                 case '(':
                     brace_balance++;
                     if (isOperandExpectedAfter(curToken)) {
-                        throw new NoOperandException();
+                        throw new NoOperandException(index);
                     } else {
                         curToken = Token.OPEN_BRACE;
                     }
@@ -130,16 +133,17 @@ public class ExpressionParser implements Parser {
                     curToken = Token.OR;
                     break;
                 default:
-                    if (isOperandExpectedAfter(curToken)) {
-                        throw new NoOperandException();
-                    }
+                    previousToken = curToken;
                     if (Character.isDigit(ch)) { //next token is a number
                         parseValue();
                         curToken = Token.CONST;
                     } else if (Character.isLetter(ch)) { //next token is a variable
                         parseText();
                     } else {
-                        throw new UnknownSymbolException();
+                        throw new UnknownSymbolException(index);
+                    }
+                    if (isOperandExpectedAfter(previousToken)) {
+                        throw new NoOperandException(index);
                     }
             }
             index++;
@@ -160,7 +164,7 @@ public class ExpressionParser implements Parser {
             case CONST:
                 if (value < 0 &&
                         !(value == Integer.MIN_VALUE && (previousToken == Token.NEG || previousToken == Token.SUB))) {
-                    throw new ConstantOverflowException();
+                    throw new ConstantOverflowException(index);
                 }
                 result = new Const(value);
                 previousToken = curToken;
@@ -196,7 +200,7 @@ public class ExpressionParser implements Parser {
             default:
                 result = new Const(0);
                 if (isArgumentExpectedAfter(previousToken)) {
-                    throw new NoArgumentException();
+                    throw new NoArgumentException(index);
                 }
         }
         return result;
