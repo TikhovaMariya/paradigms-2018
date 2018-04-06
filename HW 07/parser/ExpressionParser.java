@@ -115,7 +115,7 @@ public class ExpressionParser implements Parser {
                 case '(':
                     brace_balance++;
                     if (isOperandExpectedAfter(curToken)) {
-                        throw new NoOperandException(index);
+                        throw new NoOperandException(index, expression);
                     } else {
                         curToken = Token.OPEN_BRACE;
                     }
@@ -147,7 +147,7 @@ public class ExpressionParser implements Parser {
                         throw new UnknownSymbolException(index, expression);
                     }
                     if (isOperandExpectedAfter(previousToken)) {
-                        throw new NoOperandException(index);
+                        throw new NoOperandException(index, expression);
                     }
             }
             index++;
