@@ -31,7 +31,7 @@ public class ExpressionParser implements Parser {
 
     private void setOperandToken(Token token) throws NoArgumentException {
         if (isArgumentExpectedAfter(curToken)) {
-            throw new NoArgumentException(index);
+            throw new NoArgumentException(index, expression);
         } else {
             curToken = token;
         }
@@ -43,12 +43,16 @@ public class ExpressionParser implements Parser {
         }
     }
 
-    private void parseValue() {
+    private void parseValue() throws ConstantOverflowException {
         int start = index;
         while (index < expression.length() && Character.isDigit(expression.charAt(index))) {
             index++;
         }
         value = Integer.parseUnsignedInt(expression.substring(start, index));
+        if (value < 0 &&
+                !(value == Integer.MIN_VALUE && (previousToken == Token.NEG || previousToken == Token.SUB))) {
+            throw new ConstantOverflowException(index, expression.substring(start, index));
+        }
         index--;
     }
 
@@ -64,7 +68,7 @@ public class ExpressionParser implements Parser {
                     index += 2;
                     curToken = Token.LOG10;
                 } else {
-                    throw new UnknownVariableException(index - 3);
+                    throw new UnknownVariableException(index - 3, s);
                 }
                 break;
             case "pow":
@@ -72,7 +76,7 @@ public class ExpressionParser implements Parser {
                     index += 2;
                     curToken = Token.POW10;
                 } else {
-                    throw new UnknownVariableException(index - 3);
+                    throw new UnknownVariableException(index - 3, s);
                 }
                 break;
             case "x":
@@ -82,7 +86,7 @@ public class ExpressionParser implements Parser {
                 curToken = Token.VAR;
                 break;
             default:
-                throw new UnknownVariableException(index);
+                throw new UnknownVariableException(index, s);
         }
         index--;
     }
@@ -140,7 +144,7 @@ public class ExpressionParser implements Parser {
                     } else if (Character.isLetter(ch)) { //next token is a variable
                         parseText();
                     } else {
-                        throw new UnknownSymbolException(index);
+                        throw new UnknownSymbolException(index, expression);
                     }
                     if (isOperandExpectedAfter(previousToken)) {
                         throw new NoOperandException(index);
@@ -162,10 +166,6 @@ public class ExpressionParser implements Parser {
         CommonExpression result;
         switch (curToken) {
             case CONST:
-                if (value < 0 &&
-                        !(value == Integer.MIN_VALUE && (previousToken == Token.NEG || previousToken == Token.SUB))) {
-                    throw new ConstantOverflowException(index);
-                }
                 result = new Const(value);
                 previousToken = curToken;
                 nextToken();
@@ -200,7 +200,10 @@ public class ExpressionParser implements Parser {
             default:
                 result = new Const(0);
                 if (isArgumentExpectedAfter(previousToken)) {
-                    throw new NoArgumentException(index);
+                    if(curToken == Token.CLOSE_BRACE) {
+                        index--;
+                    }
+                    throw new NoArgumentException(index, expression);
                 }
         }
         return result;

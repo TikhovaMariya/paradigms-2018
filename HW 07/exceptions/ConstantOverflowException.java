@@ -5,7 +5,7 @@ public class ConstantOverflowException extends ParsingException {
         super("constant overflow exception");
     }
 
-    public ConstantOverflowException(int index) {
-        super("constant overflow at index: " + Integer.toString(index));
+    public ConstantOverflowException(int index, String constant) {
+        super("constant <" + constant + "> overflow at index: " + Integer.toString(index));
     }
 }
