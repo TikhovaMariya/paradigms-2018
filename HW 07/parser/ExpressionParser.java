@@ -5,11 +5,12 @@ import expression.exceptions.*;
 
 public class ExpressionParser implements Parser {
     private String expression;
+    private String variable;
+
     private int index = 0;
     private int value;
     private int brace_balance = 0;
 
-    private String variable;
     private Token curToken;
     private Token previousToken;
 
@@ -48,10 +49,10 @@ public class ExpressionParser implements Parser {
         while (index < expression.length() && Character.isDigit(expression.charAt(index))) {
             index++;
         }
-        value = Integer.parseUnsignedInt(expression.substring(start, index));
-        if (value < 0 &&
-                !(value == Integer.MIN_VALUE && (previousToken == Token.NEG || previousToken == Token.SUB))) {
-            throw new ConstantOverflowException(index, expression.substring(start, index));
+        if(curToken == Token.NEG) {
+            value = Integer.parseInt("-" + expression.substring(start, index));
+        } else {
+            value = Integer.parseInt(expression.substring(start, index));
         }
         index--;
     }
@@ -100,7 +101,16 @@ public class ExpressionParser implements Parser {
                     if (isOperandExpectedAfter(curToken)) {
                         curToken = Token.SUB;
                     } else {
-                        curToken = Token.NEG;
+                        index++;
+                        skipWhitespaces();
+                        if (index < expression.length() && Character.isDigit(expression.charAt(index))) {
+                            curToken = Token.NEG;
+                            parseValue();
+                            curToken = Token.CONST;
+                        } else {
+                            index--;
+                            curToken = Token.NEG;
+                        }
                     }
                     break;
                 case '+':
@@ -177,15 +187,7 @@ public class ExpressionParser implements Parser {
                 break;
             case NEG:
                 CommonExpression logPow10 = logPow10();
-                if (previousToken == Token.CONST && value < 0) {
-                    if (value == Integer.MIN_VALUE) {
-                        result = logPow10;
-                    } else {
-                        throw new ConstantOverflowException();
-                    }
-                } else {
-                    result = new CheckedNegate(logPow10);
-                }
+                result = new CheckedNegate(logPow10);
                 break;
             case OPEN_BRACE:
                 result = or();
@@ -200,7 +202,7 @@ public class ExpressionParser implements Parser {
             default:
                 result = new Const(0);
                 if (isArgumentExpectedAfter(previousToken)) {
-                    if(curToken == Token.CLOSE_BRACE) {
+                    if (curToken == Token.CLOSE_BRACE) {
                         index--;
                     }
                     throw new NoArgumentException(index, expression);
