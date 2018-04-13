@@ -123,7 +123,7 @@ public class ExpressionParser implements Parser {
                 case ')':
                     brace_balance--;
                     if (brace_balance < 0) {
-                        throw new NoOpeningParenthesisException();
+                        throw new NoOpeningParenthesisException(index, expression);
                     }
                     curToken = Token.CLOSE_BRACE;
                     break;
@@ -153,7 +153,7 @@ public class ExpressionParser implements Parser {
             index++;
         } else {
             if (brace_balance > 0) {
-                throw new NoClosingParenthesisException();
+                throw new NoClosingParenthesisException(index, expression);
             }
             curToken = Token.END;
         }
