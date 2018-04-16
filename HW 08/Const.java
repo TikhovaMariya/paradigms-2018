@@ -1,18 +1,23 @@
 package expression;
 
-public class Const implements CommonExpression {
-    private final Number value;
+import expression.mode.*;
+import expression.exceptions.EvaluatingException;
 
-    public Const(Number x) {
+public class Const<T> implements CommonExpression<T> {
+    private final T value;
+    private final GenericMode<T> modeType;
+
+    public Const(T x, GenericMode<T> mode) {
         value = x;
+        modeType = mode;
     }
 
-    public int evaluate(int x) {
-        return value.intValue();
+    public T evaluate(T x) throws EvaluatingException {
+        return value;
     }
 
-    public int evaluate(int x, int y, int z) {
-        return value.intValue();
+    public T evaluate(T x, T y, T z) {
+        return value;
     }
 
 }

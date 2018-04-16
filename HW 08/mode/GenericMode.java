@@ -1,6 +1,9 @@
-package expression;
+package expression.mode;
 
-public interface Operation<T> {
+import expression.exceptions.DivisionByZeroException;
+import expression.exceptions.OverflowException;
+
+public interface GenericMode<T> {
     T Add(final T x, final T y) throws OverflowException;
 
     T Subtract(final T x, final T y) throws OverflowException;
@@ -11,7 +14,7 @@ public interface Operation<T> {
 
     T Negate(final T x) throws OverflowException;
 
-    T Pow(final T x) throws OverflowException;
+    T getValue(final int x);
 
-    T Log(final T x) throws IllegalLogArgumentException;
+    T parseValue(final String s);
 }

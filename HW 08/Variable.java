@@ -1,26 +1,30 @@
 package expression;
 
-import expression.exceptions.EvaluatingException;
+import expression.exceptions.UnknownVariableException;
+import expression.mode.*;
 
-public class Variable implements CommonExpression {
+public class Variable<T> implements CommonExpression<T> {
     private String name;
+    private final GenericMode<T> modeType;
 
-    public Variable(String x) {
+    public Variable(String x, GenericMode<T> mode) {
         name = x;
+        modeType = mode;
     }
 
-    public Variable(char x) {
+    public Variable(char x, GenericMode<T> mode) {
         name = String.valueOf(x);
+        modeType = mode;
     }
 
-    public int evaluate(int x) throws EvaluatingException {
+    public T evaluate(T x) throws UnknownVariableException {
         if (name != "x") {
-            System.out.println("duh " + name);
+            throw new UnknownVariableException(name);
         }
         return x;
     }
 
-    public int evaluate(int x, int y, int z) throws EvaluatingException {
+    public T evaluate(T x, T y, T z) throws UnknownVariableException {
         switch (name) {
             case "x":
                 return x;
@@ -29,7 +33,7 @@ public class Variable implements CommonExpression {
             case "z":
                 return z;
             default:
-                return 0;
+                throw new UnknownVariableException(name);
         }
     }
 

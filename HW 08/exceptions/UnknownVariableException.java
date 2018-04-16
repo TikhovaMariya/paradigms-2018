@@ -5,6 +5,10 @@ public class UnknownVariableException extends ParsingException {
         super("unknown variable exception");
     }
 
+    public UnknownVariableException(String s) {
+        super("unknown variable " + s);
+    }
+
     public UnknownVariableException(int index) {
         super("unknown variable at index: " + Integer.toString(index));
     }

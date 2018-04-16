@@ -1,21 +1,25 @@
 package expression;
 
 import expression.exceptions.EvaluatingException;
+import expression.exceptions.ParsingException;
+import expression.mode.*;
 
-public abstract class AbstractUnaryOperation implements CommonExpression {
-    private final CommonExpression element;
+public abstract class AbstractUnaryOperation<T> implements CommonExpression<T> {
+    private final CommonExpression<T> element;
+    protected final GenericMode<T> modeType;
 
-    public AbstractUnaryOperation(CommonExpression x) {
+    public AbstractUnaryOperation(CommonExpression<T> x, GenericMode<T> mode) {
         element = x;
+        modeType = mode;
     }
 
-    protected abstract int perform(int x) throws EvaluatingException;
+    protected abstract T perform(T x) throws EvaluatingException, ParsingException;
 
-    public int evaluate(int x) throws EvaluatingException {
+    public T evaluate(T x) throws EvaluatingException, ParsingException {
         return perform(element.evaluate(x));
     }
 
-    public int evaluate(int x, int y, int z) throws EvaluatingException {
+    public T evaluate(T x, T y, T z) throws EvaluatingException, ParsingException {
         return perform(element.evaluate(x, y, z));
     }
 }

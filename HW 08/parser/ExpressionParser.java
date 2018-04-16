@@ -1,23 +1,28 @@
 package expression.parser;
 
 import expression.*;
+import expression.mode.*;
 import expression.exceptions.*;
 
-public class ExpressionParser implements Parser {
+public class ExpressionParser<T> implements Parser {
     private String expression;
+    private String variable;
+
     private int index = 0;
-    private int value;
+    private T value;
     private int brace_balance = 0;
 
-    private String variable;
     private Token curToken;
     private Token previousToken;
 
-    bool checked = true;
+    GenericMode<T> modeType;
+
+    public ExpressionParser(final GenericMode<T> mode) {
+        modeType = mode;
+    }
 
     private enum Token {
-        CONST, VAR, NEG, ADD, SUB, DIV, MUL, LOG10, POW10,
-        OPEN_BRACE, CLOSE_BRACE, AND, XOR, OR, END
+        CONST, VAR, NEG, ADD, SUB, DIV, MUL, OPEN_BRACE, CLOSE_BRACE, END
     }
 
 
@@ -26,9 +31,8 @@ public class ExpressionParser implements Parser {
     }
 
     private boolean isArgumentExpectedAfter(Token token) {
-        return (token == Token.END && index != expression.length()) || token == Token.NEG ||
-                token == Token.OPEN_BRACE || token == Token.ADD || token == Token.SUB || token == Token.POW10 ||
-                token == Token.LOG10 || token == Token.DIV || token == Token.MUL;
+        return (token == Token.END && index != expression.length()) || token == Token.NEG || token == Token.OPEN_BRACE
+                || token == Token.ADD || token == Token.SUB || token == Token.DIV || token == Token.MUL;
     }
 
     private void setOperandToken(Token token) throws NoArgumentException {
@@ -47,14 +51,22 @@ public class ExpressionParser implements Parser {
 
     private void parseValue() throws ConstantOverflowException {
         int start = index;
-        while (index < expression.length() && Character.isDigit(expression.charAt(index))) {
+        boolean e = true, dot = true;
+        while (index < expression.length() && (Character.isDigit(expression.charAt(index)) ||
+                (Character.toLowerCase(expression.charAt(index)) == 'e' && e) ||
+                ((expression.charAt(index) == '.' || expression.charAt(index) == ',') && dot))) {
+            if(Character.toLowerCase(expression.charAt(index)) == 'e') {
+                e = false;
+            } else if(expression.charAt(index) == '.' || expression.charAt(index) == ',') {
+                dot = false;
+            }
             index++;
         }
-        value = Integer.parseUnsignedInt(expression.substring(start, index));
-        if (value < 0 &&
-                !(value == Integer.MIN_VALUE && (previousToken == Token.NEG || previousToken == Token.SUB))) {
-            throw new ConstantOverflowException(index, expression.substring(start, index));
+        String s = expression.substring(start, index);
+        if (curToken == Token.NEG) {
+           s = "-" + s;
         }
+        value = modeType.parseValue(s);
         index--;
     }
 
@@ -65,22 +77,6 @@ public class ExpressionParser implements Parser {
         }
         String s = expression.substring(start, index);
         switch (s) {
-            case "log":
-                if (expression.charAt(index) == '1' && expression.charAt(index + 1) == '0') {
-                    index += 2;
-                    curToken = Token.LOG10;
-                } else {
-                    throw new UnknownVariableException(index - 3, s);
-                }
-                break;
-            case "pow":
-                if (expression.charAt(index) == '1' && expression.charAt(index + 1) == '0') {
-                    index += 2;
-                    curToken = Token.POW10;
-                } else {
-                    throw new UnknownVariableException(index - 3, s);
-                }
-                break;
             case "x":
             case "y":
             case "z":
@@ -102,7 +98,16 @@ public class ExpressionParser implements Parser {
                     if (isOperandExpectedAfter(curToken)) {
                         curToken = Token.SUB;
                     } else {
-                        curToken = Token.NEG;
+                        index++;
+                        skipWhitespaces();
+                        if (index < expression.length() && Character.isDigit(expression.charAt(index))) {
+                            curToken = Token.NEG;
+                            parseValue();
+                            curToken = Token.CONST;
+                        } else {
+                            index--;
+                            curToken = Token.NEG;
+                        }
                     }
                     break;
                 case '+':
@@ -125,18 +130,9 @@ public class ExpressionParser implements Parser {
                 case ')':
                     brace_balance--;
                     if (brace_balance < 0) {
-                        throw new NoOpeningParenthesisException();
+                        throw new NoOpeningParenthesisException(index, expression);
                     }
                     curToken = Token.CLOSE_BRACE;
-                    break;
-                case '&':
-                    curToken = Token.AND;
-                    break;
-                case '^':
-                    curToken = Token.XOR;
-                    break;
-                case '|':
-                    curToken = Token.OR;
                     break;
                 default:
                     previousToken = curToken;
@@ -155,54 +151,41 @@ public class ExpressionParser implements Parser {
             index++;
         } else {
             if (brace_balance > 0) {
-                throw new NoClosingParenthesisException();
+                throw new NoClosingParenthesisException(index, expression);
             }
             curToken = Token.END;
         }
     }
 
     // prim() - обрабатывает первичные выражения
-    private CommonExpression<T> prim() throws ParsingException {
+    private CommonExpression prim() throws ParsingException {
         previousToken = curToken;
         nextToken();
-        CommonExpression<T> result;
+        CommonExpression result;
         switch (curToken) {
             case CONST:
-                result = new Const(value);
+                result = new Const(value, modeType);
                 previousToken = curToken;
                 nextToken();
                 break;
             case VAR:
-                result = new Variable(variable);
+                result = new Variable(variable, modeType);
                 previousToken = curToken;
                 nextToken();
                 break;
             case NEG:
-                CommonExpression<T> logPow10 = logPow10();
-                if (previousToken == Token.CONST && value < 0) {
-                    if (value == Integer.MIN_VALUE) {
-                        result = logPow10;
-                    } else {
-                        throw new ConstantOverflowException();
-                    }
-                } else {
-                    result = new Negate(logPow10);
-                }
+                CommonExpression prim = prim();
+                result = new Negate(prim, modeType);
                 break;
             case OPEN_BRACE:
-                result = or();
+                result = expr();
                 previousToken = curToken;
                 nextToken();
                 break;
-            case LOG10:
-            case POW10:
-                previousToken = curToken;
-                result = new Const(0);
-                break;
             default:
-                result = new Const(0);
+                result = new Const(0, modeType);
                 if (isArgumentExpectedAfter(previousToken)) {
-                    if(curToken == Token.CLOSE_BRACE) {
+                    if (curToken == Token.CLOSE_BRACE) {
                         index--;
                     }
                     throw new NoArgumentException(index, expression);
@@ -211,34 +194,16 @@ public class ExpressionParser implements Parser {
         return result;
     }
 
-
-    // logPow10() - логарифм и возведение в степень по основанию 10
-    private CommonExpression<T> logPow10() throws ParsingException {
-        CommonExpression<T> result = prim();
-        while (true) {
-            switch (curToken) {
-                case POW10:
-                    result = new Pow(logPow10());
-                    break;
-                case LOG10:
-                    result = new Log(logPow10());
-                    break;
-                default:
-                    return result;
-            }
-        }
-    }
-
     // term() - умножение и деление
-    private CommonExpression<T> term() throws ParsingException {
-        CommonExpression<T> result = logPow10();
+    private CommonExpression term() throws ParsingException {
+        CommonExpression result = prim();
         while (true) {
             switch (curToken) {
                 case MUL:
-                    result = new Multiply(result, logPow10());
+                    result = new Multiply(result, prim(), modeType);
                     break;
                 case DIV:
-                    result = new Divide(result, logPow10());
+                    result = new Divide(result, prim(), modeType);
                     break;
                 default:
                     return result;
@@ -248,15 +213,15 @@ public class ExpressionParser implements Parser {
 
 
     // expr() - сложение и вычитание
-    private CommonExpression<T> expr() throws ParsingException {
-        CommonExpression<T> result = term();
+    private CommonExpression expr() throws ParsingException {
+        CommonExpression result = term();
         while (true) {
             switch (curToken) {
                 case ADD:
-                    result = new Add(result, term());
+                    result = new Add(result, term(), modeType);
                     break;
                 case SUB:
-                    result = new Subtract(result, term());
+                    result = new Subtract(result, term(), modeType);
                     break;
                 default:
                     return result;
@@ -264,54 +229,12 @@ public class ExpressionParser implements Parser {
         }
     }
 
-    // and() - побитное и
-    private CommonExpression and() throws ParsingException {
-        CommonExpression result = expr();
-        while (true) {
-            switch (curToken) {
-                case AND:
-                    result = new And(result, expr());
-                    break;
-                default:
-                    return result;
-            }
-        }
-    }
-
-    // xor() - побитное иключающее или
-    private CommonExpression xor() throws ParsingException {
-        CommonExpression result = and();
-        while (true) {
-            switch (curToken) {
-                case XOR:
-                    result = new Xor(result, and());
-                    break;
-                default:
-                    return result;
-            }
-        }
-    }
-
-    // or() - побитное или
-    private CommonExpression or() throws ParsingException {
-        CommonExpression result = xor();
-        while (true) {
-            switch (curToken) {
-                case OR:
-                    result = new Or(result, xor());
-                    break;
-                default:
-                    return result;
-            }
-        }
-    }
-
-    public CommonExpression<T> parse(String s) throws ParsingException {
+    public CommonExpression parse(String s) throws ParsingException {
         expression = s;
         index = 0;
         brace_balance = 0;
         curToken = Token.END;
-        return or();
+        return expr();
     }
 
 }
