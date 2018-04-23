@@ -59,26 +59,16 @@ public class ExpressionParser implements Parser {
 
     private void parseText() throws ParsingException {
         int start = index;
-        while (index < expression.length() && Character.isLetter(expression.charAt(index))) {
+        while (index < expression.length() && Character.isLetterOrDigit(expression.charAt(index))) {
             index++;
         }
         String s = expression.substring(start, index);
         switch (s) {
-            case "log":
-                if (expression.charAt(index) == '1' && expression.charAt(index + 1) == '0') {
-                    index += 2;
-                    curToken = Token.LOG10;
-                } else {
-                    throw new UnknownVariableException(index - 3, s);
-                }
+            case "log10":
+                curToken = Token.LOG10;
                 break;
-            case "pow":
-                if (expression.charAt(index) == '1' && expression.charAt(index + 1) == '0') {
-                    index += 2;
-                    curToken = Token.POW10;
-                } else {
-                    throw new UnknownVariableException(index - 3, s);
-                }
+            case "pow10":
+                curToken = Token.POW10;
                 break;
             case "x":
             case "y":
