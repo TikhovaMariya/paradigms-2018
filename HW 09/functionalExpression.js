@@ -1,63 +1,65 @@
 "use strict"
-function cnst(a) {
-    return function (x, y, z) {
-        return a;
-    };
+
+function makeOp(op) {
+    return function () {
+        var args = arguments;
+        return function () {
+            var res = [];
+            for (var i = 0; i < args.length; ++i) {
+                res.push(args[i].apply(null, arguments));
+            }
+            return op.apply(null, res);
+        }
+    }
 }
-function variable(a)  {
-    return function (x, y, z) {
+
+var cnst = function (a) {
+    return function() {
+        return a;
+    }
+};
+
+var variable = function (a) {
+    return function() {
         switch (a) {
             case 'x':
-                return x;
+                return arguments[0];
             case 'y':
-                return y;
+                return arguments[1];
             case 'z':
-                return z;
+                return arguments[2];
             default:
                 return 0;
         }
-    };
+    }
 };
 
-function add(a, b) {
-    return function (x, y, z) {
-        return a(x, y, z) + b(x, y, z);
-    };
-};
+var add = makeOp(function (a, b) {
+    return a + b;
+});
 
-function subtract(a, b) {
-    return function (x, y, z) {
-        return a(x, y, z) - b(x, y, z);
-    };
-};
+var subtract = makeOp(function (a, b) {
+    return a - b;
+});
 
-function multiply(a, b) {
-    return function (x, y, z) {
-        return a(x, y, z) * b(x, y, z);
-    };
-};
 
-function divide(a, b) {
-    return function (x, y, z) {
-        return a(x, y, z) / b(x, y, z);
-    };
-};
+var multiply = makeOp(function (a, b) {
+    return a * b;
+});
 
-function negate(a) {
-    return function (x, y, z) {
-        return -a(x, y, z);
-    };
-};
+var divide = makeOp(function (a, b) {
+    return a / b;
+});
 
-function cube(a) {
-    return function (x, y, z) {
-        return Math.pow(a(x, y, z), 3);
-    };
-};
+var negate = makeOp(function (a) {
+    return -a;
+});
 
-function cuberoot(a) {
-    return function (x, y, z) {
-        return Math.pow(a(x, y, z), 1/3);
-    };
-};
+var cube = makeOp(function (a) {
+    return Math.pow(a, 3);
+});
+
+var cuberoot = makeOp(function (a) {
+    return Math.pow(a, 1/3);
+});
 
