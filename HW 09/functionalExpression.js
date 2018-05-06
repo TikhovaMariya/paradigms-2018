@@ -13,13 +13,22 @@ function makeOp(op) {
     }
 }
 
-var cnst = function (a) {
-    return function() {
+function makeVal(op) {
+    return function () {
+        var args = arguments;
+        return function () {
+            return op.apply(null, args).apply(null, arguments);
+        }
+    }
+}
+
+var cnst = makeVal(function (a) {
+    return function () {
         return a;
     }
-};
+});
 
-var variable = function (a) {
+var variable = makeVal(function (a) {
     return function() {
         switch (a) {
             case 'x':
@@ -32,7 +41,7 @@ var variable = function (a) {
                 return 0;
         }
     }
-};
+});
 
 var add = makeOp(function (a, b) {
     return a + b;
